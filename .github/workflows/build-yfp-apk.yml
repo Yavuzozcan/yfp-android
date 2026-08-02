@@ -22,6 +22,10 @@ jobs:
       - name: YFP ana ekranini kopyala
         run: cp lib/main.dart yfp_app/lib/main.dart
 
+      - name: Kalici kayit paketini ekle
+        working-directory: yfp_app
+        run: flutter pub add shared_preferences
+        
       - name: Paketleri indir
         working-directory: yfp_app
         run: flutter pub get
