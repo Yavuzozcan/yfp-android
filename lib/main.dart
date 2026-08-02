@@ -231,6 +231,27 @@ class _AnaUygulamaState extends State<AnaUygulama> {
     final dakika = tarih.minute.toString().padLeft(2, '0');
     return '${tarihYaz(tarih)} - $saat:$dakika';
   }
+    int kalanGunSayisi(DateTime tarih) {
+    final simdi = DateTime.now();
+    final bugun = DateTime(simdi.year, simdi.month, simdi.day);
+    final hedef = DateTime(tarih.year, tarih.month, tarih.day);
+
+    return hedef.difference(bugun).inDays;
+  }
+
+  String sonOdemeMesaji(DateTime tarih) {
+    final kalanGun = kalanGunSayisi(tarih);
+
+    if (kalanGun > 0) {
+      return 'Son ödeme tarihine $kalanGun gün kaldı';
+    }
+
+    if (kalanGun == 0) {
+      return 'Son ödeme tarihi bugün';
+    }
+
+    return 'Son ödeme tarihi ${kalanGun.abs()} gün geçti';
+  }
 
   double? sayiyaCevir(String metin) {
     String temiz = metin.trim().replaceAll(' ', '');
@@ -528,6 +549,171 @@ class _AnaUygulamaState extends State<AnaUygulama> {
 
     await _verileriKaydet();
   }
+  void kartDetayiniAc(Kart kart) {
+    final toplamOdenen = kart.baslangicBorc - kart.kalanBorc;
+    final kullanilabilirLimit = kart.limit - kart.kalanBorc;
+
+    final oran = kart.baslangicBorc <= 0
+        ? 0.0
+        : (toplamOdenen / kart.baslangicBorc)
+            .clamp(0, 1)
+            .toDouble();
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    kart.banka,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  ListTile(
+                    title: const Text('Başlangıç borcu'),
+                    trailing: Text(
+                      paraYaz(kart.baslangicBorc),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    title: const Text('Toplam ödenen'),
+                    trailing: Text(
+                      paraYaz(toplamOdenen),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    title: const Text('Kalan borç'),
+                    trailing: Text(
+                      paraYaz(kart.kalanBorc),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    title: const Text('Kart limiti'),
+                    trailing: Text(
+                      paraYaz(kart.limit),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    title: const Text('Kullanılabilir limit'),
+                    trailing: Text(
+                      paraYaz(kullanilabilirLimit),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    title: const Text('Ekstre kesim tarihi'),
+                    trailing: Text(
+                      tarihYaz(kart.ekstre),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    title: const Text('Son ödeme tarihi'),
+                    trailing: Text(
+                      tarihYaz(kart.sonOdeme),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  LinearProgressIndicator(
+                    value: oran,
+                    minHeight: 12,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'Tamamlanma: %${(oran * 100).toStringAsFixed(1)}',
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Text(
+                    sonOdemeMesaji(kart.sonOdeme),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: kalanGunSayisi(kart.sonOdeme) <= 3
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        setState(() {
+                          seciliSayfa = 2;
+                        });
+                      },
+                      icon: const Icon(Icons.payments),
+                      label: const Text('Ödeme Yap'),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        kartFormunuAc(mevcutKart: kart);
+                      },
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Kartı Düzenle'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -645,6 +831,7 @@ class AnaSayfa extends StatelessWidget {
     required this.kalan,
     required this.oran,
     required this.paraYaz,
+    required this.kartaTiklandi,
   });
 
   final List<Kart> kartlar;
@@ -653,6 +840,7 @@ class AnaSayfa extends StatelessWidget {
   final double kalan;
   final double oran;
   final String Function(double) paraYaz;
+  final void Function(Kart) kartaTiklandi;
 
   @override
   Widget build(BuildContext context) {
@@ -722,6 +910,7 @@ class AnaSayfa extends StatelessWidget {
           ...kartlar.map(
             (kart) => Card(
               child: ListTile(
+                onTap: () => kartaTiklandi(kart),
                 leading: const CircleAvatar(
                   child: Icon(Icons.account_balance),
                 ),
