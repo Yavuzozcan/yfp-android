@@ -317,9 +317,7 @@ class _AnaUygulamaState extends State<AnaUygulama> {
       });
     }
 
-    bankaController.dispose();
-    borcController.dispose();
-    limitController.dispose();
+   
   }
 
   Future<void> kartSil(KartBilgisi kart) async {
