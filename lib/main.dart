@@ -549,15 +549,119 @@ class _AnaUygulamaState extends State<AnaUygulama> {
 
     await _verileriKaydet();
   }
-  void kartDetayiniAc(Kart kart) {
-    final toplamOdenen = kart.baslangicBorc - kart.kalanBorc;
-    final kullanilabilirLimit = kart.limit - kart.kalanBorc;
+    void kartDetayiniAc(Kart kart) {
+    final odenen = kart.baslangicBorc - kart.kalanBorc;
 
-    final oran = kart.baslangicBorc <= 0
+    final oran = kart.baslangicBorc == 0
         ? 0.0
-        : (toplamOdenen / kart.baslangicBorc)
+        : (odenen / kart.baslangicBorc)
             .clamp(0, 1)
             .toDouble();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                Text(
+                  kart.banka,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height:20),
+
+                Card(
+                  child: ListTile(
+                    title: const Text("Başlangıç Borcu"),
+                    trailing: Text(
+                      paraYaz(kart.baslangicBorc),
+                    ),
+                  ),
+                ),
+
+                Card(
+                  child: ListTile(
+                    title: const Text("Ödenen"),
+                    trailing: Text(
+                      paraYaz(odenen),
+                    ),
+                  ),
+                ),
+
+                Card(
+                  child: ListTile(
+                    title: const Text("Kalan Borç"),
+                    trailing: Text(
+                      paraYaz(kart.kalanBorc),
+                    ),
+                  ),
+                ),
+
+                Card(
+                  child: ListTile(
+                    title: const Text("Kullanılabilir Limit"),
+                    trailing: Text(
+                      paraYaz(
+                        kart.limit - kart.kalanBorc,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height:15),
+
+                LinearProgressIndicator(
+                  value: oran,
+                  minHeight: 12,
+                ),
+
+                const SizedBox(height:8),
+
+                Text(
+                  "Borç Bitirme: %${(oran*100).toStringAsFixed(1)}",
+                ),
+
+                const SizedBox(height:15),
+
+                Text(
+                  sonOdemeMesaji(kart.sonOdeme),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height:20),
+
+                FilledButton.icon(
+                  onPressed: (){
+                    Navigator.pop(context);
+                    setState(() {
+                      seciliSayfa = 2;
+                    });
+                  },
+                  icon: const Icon(Icons.payment),
+                  label: const Text(
+                    "Ödeme Yap",
+                  ),
+                ),
+
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
     showModalBottomSheet<void>(
       context: context,
