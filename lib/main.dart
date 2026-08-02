@@ -733,6 +733,7 @@ class _AnaUygulamaState extends State<AnaUygulama> {
         kalan: toplamKalanBorc,
         oran: tamamlanmaOrani,
         paraYaz: paraYaz,
+        kartaTiklandi: kartDetayiniAc,
       ),
       KartlarSayfasi(
         kartlar: kartlar,
